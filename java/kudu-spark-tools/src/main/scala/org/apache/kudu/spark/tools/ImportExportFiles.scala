@@ -25,6 +25,9 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.apache.kudu.spark.kudu._
 import com.databricks.spark.avro
 import com.google.common.annotations.VisibleForTesting
+import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.IntegerType
 
 object ImportExportKudu {
   val LOG: Logger = LoggerFactory.getLogger(ImportExportKudu.getClass)
@@ -52,6 +55,7 @@ object ImportExportKudu {
                      format: String = "csv",
                      masterAddrs: String = "localhost",
                      path: String = "file://",
+                     table: String = "",
                      tableName: String = "",
                      columns: String = "*",
                      delimiter: String = ",",
@@ -74,6 +78,7 @@ object ImportExportKudu {
             case "--format" => options.copy(format = value)
             case "--master-addrs" => options.copy(masterAddrs = value)
             case "--path" => options.copy(path = value)
+            case "--table" => options.copy(table = value)
             case "--table-name" => options.copy(tableName = value)
             case "--columns" => options.copy(columns = value)
             case "--delimiter" => options.copy(delimiter = value)
@@ -116,7 +121,112 @@ object ImportExportFiles {
         args.format match {
           case "csv" =>
             val df = sqlContext.read.option("header", args.header).option("delimiter", args.delimiter).csv(args.path)
-            kc.upsertRows(df, args.tableName)
+            df.show()
+            // convert column type for tpch tables
+            if (args.table == "customer"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c3_tmp", df.col("_c3").cast(LongType))
+                .drop("_c3")
+                .withColumnRenamed("c3_tmp", "_c3")
+              val df3 = df2.withColumn("c5_tmp", df.col("_c5").cast(DoubleType))
+                .drop("_c5")
+                .withColumnRenamed("c5_tmp", "_c5")
+              kc.upsertRows(df3, args.tableName)
+            } else if (args.table == "lineitem") {
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c1_tmp", df.col("_c1").cast(LongType))
+                .drop("_c1")
+                .withColumnRenamed("c1_tmp", "_c1")
+              val df3 = df2.withColumn("c2_tmp", df.col("_c2").cast(LongType))
+                .drop("_c2")
+                .withColumnRenamed("c2_tmp", "_c2")
+              val df4 = df3.withColumn("c3_tmp", df.col("_c3").cast(IntegerType))
+                .drop("_c3")
+                .withColumnRenamed("c3_tmp", "_c3")
+              val df5 = df4.withColumn("c4_tmp", df.col("_c4").cast(DoubleType))
+                .drop("_c4")
+                .withColumnRenamed("c4_tmp", "_c4")
+              val df6 = df5.withColumn("c5_tmp", df.col("_c5").cast(DoubleType))
+                .drop("_c5")
+                .withColumnRenamed("c5_tmp", "_c5")
+              val df7 = df6.withColumn("c6_tmp", df.col("_c6").cast(DoubleType))
+                .drop("_c6")
+                .withColumnRenamed("c6_tmp", "_c6")
+              val df8 = df7.withColumn("c7_tmp", df.col("_c7").cast(DoubleType))
+                .drop("_c7")
+                .withColumnRenamed("c7_tmp", "_c7")
+              kc.upsertRows(df8, args.tableName)
+            } else if (args.table == "nation"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c2_tmp", df.col("_c2").cast(LongType))
+                .drop("_c2")
+                .withColumnRenamed("c2_tmp", "_c2")
+              kc.upsertRows(df2, args.tableName)
+            } else if (args.table == "orders"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c1_tmp", df.col("_c1").cast(LongType))
+                .drop("_c1")
+                .withColumnRenamed("c1_tmp", "_c1")
+              val df3 = df2.withColumn("c3_tmp", df.col("_c3").cast(DoubleType))
+                .drop("_c3")
+                .withColumnRenamed("c3_tmp", "_c3")
+              val df4 = df3.withColumn("c7_tmp", df.col("_c7").cast(IntegerType))
+                .drop("_c7")
+                .withColumnRenamed("c7_tmp", "_c7")
+              kc.upsertRows(df4, args.tableName)
+            } else if (args.table == "part"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c5_tmp", df.col("_c5").cast(IntegerType))
+                .drop("_c5")
+                .withColumnRenamed("c5_tmp", "_c5")
+              val df3 = df2.withColumn("c7_tmp", df.col("_c7").cast(DoubleType))
+                .drop("_c7")
+                .withColumnRenamed("c7_tmp", "_c7")
+              kc.upsertRows(df3, args.tableName)
+            } else if (args.table == "partsupp"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c1_tmp", df.col("_c1").cast(LongType))
+                .drop("_c1")
+                .withColumnRenamed("c1_tmp", "_c1")
+              val df3 = df2.withColumn("c2_tmp", df.col("_c2").cast(IntegerType))
+                .drop("_c2")
+                .withColumnRenamed("c2_tmp", "_c2")
+              val df4 = df3.withColumn("c3_tmp", df.col("_c3").cast(DoubleType))
+                .drop("_c3")
+                .withColumnRenamed("c3_tmp", "_c3")
+              kc.upsertRows(df4, args.tableName)
+            } else if (args.table == "region"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              kc.upsertRows(df1, args.tableName)
+
+            } else if (args.table == "supplier"){
+              val df1 = df.withColumn("c0_tmp", df.col("_c0").cast(LongType))
+                .drop("_c0")
+                .withColumnRenamed("c0_tmp", "_c0")
+              val df2 = df1.withColumn("c3_tmp", df.col("_c3").cast(LongType))
+                .drop("_c3")
+                .withColumnRenamed("c3_tmp", "_c3")
+              val df3 = df2.withColumn("c5_tmp", df.col("_c5").cast(DoubleType))
+                .drop("_c5")
+                .withColumnRenamed("c5_tmp", "_c5")
+              kc.upsertRows(df3, args.tableName)
+            }
+            else kc.upsertRows(df, args.tableName)
+
           case "parquet" =>
             val df = sqlContext.read.parquet(args.path)
             kc.upsertRows(df, args.tableName)
